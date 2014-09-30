@@ -94,7 +94,7 @@ func forwardConnection(input net.Conn, outputs []net.Conn) {
 
 func handleConnection(input net.Conn) {
     l := len(servers)
-    var first net.Conn
+    var default_output net.Conn
     outputs := make([]net.Conn, l)
     for i := range servers {
         s := &servers[i]
@@ -109,19 +109,19 @@ func handleConnection(input net.Conn) {
         } else {
             log.Printf("connected to host %s\n", s.Host)
             outputs[i] = output
-            if first == nil {
-                // forward output of first child
-                first = output
+            if s.Default {
+                // forward output of default child
+                default_output = output
             }
         }
     }
 
-    if first != nil {
+    if default_output != nil {
         // forward input to every child
         go forwardConnection(input, outputs)
         // forward output of first child
         inputs := []net.Conn {input}
-        go forwardConnection(first, inputs)
+        go forwardConnection(default_output, inputs)
     }
 }
 
